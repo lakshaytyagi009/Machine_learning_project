@@ -1,0 +1,98 @@
+```{r}
+require(readr)
+titanic <- read.csv("titanic.csv")
+str(titanic)
+```
+
+
+```{r}
+require(dplyr)
+titanic <- mutate_if(titanic,is.character,tolower)
+head(titanic)
+```
+
+```{r}
+colSums(is.na(titanic))
+titanic <- distinct(titanic)
+```
+
+```{r}
+titanic$Name <- NULL
+titanic$Ticket <- NULL
+titanic$Embarked <- NULL
+```
+
+```{r}
+table(titanic$Survived)
+```
+
+```{r}
+table(titanic$Pclass)
+```
+
+```{r}
+table(titanic$Sex)
+```
+
+```{r}
+quantile(titanic$Age, seq(0,1, by = 0.01))
+plot(quantile(titanic$Age, seq(0,1, by = 0.01)))
+titanic$Age[titanic$Age > 66.400] = 66.400
+```
+
+```{r}
+quantile(titanic$Fare, seq(0,1, by = 0.01))
+plot(quantile(titanic$Fare, seq(0,1, by = 0.01)))
+titanic$Fare[titanic$Fare > 151.55000] = 151.55000
+```
+```{r}
+require(dummies)
+titanic <- dummy.data.frame(titanic)
+View(titanic)
+```
+
+
+```{r}
+require(caTools)
+set.seed(111)
+i <- sample.split(titanic$Survived, SplitRatio = 0.75)
+trn_data <- titanic[i,]
+val_data <- titanic[!i,]
+
+
+```
+
+```{r}
+lgt_1 <- glm(titanic$Survived ~ . ,data = titanic, family = 'binomial')
+summary(lgt_1)
+```
+
+```{r}
+lgt_2 <- step(lgt_1)
+summary(lgt_2)
+```
+```{r}
+require(car)
+vif(lgt_2)
+```
+
+```{r}
+val_data$pred_Survived <- predict(lgt_2, newdata = val_data,type = 'response')
+View(val_data)
+```
+
+```{r}
+val_data$pred_Survived <- if_else(val_data$pred_Survived > 0.50, 1, 0)
+View(val_data)
+```
+
+```{r}
+require(forecast)
+accuracy(val_data$pred_Survived,val_data$Survived)
+```
+
+```{r}
+require(caret)
+confusionMatrix(as.factor(val_data$pred_Survived),as.factor(val_data$Survived))
+```
+
